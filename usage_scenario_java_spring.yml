@@ -18,7 +18,7 @@ services:
 
   framework:
     build:
-      dockerfile: .Dockerfile.node
+      dockerfile: .Dockerfile.default
       context: java/spring
     shell: sh
 
