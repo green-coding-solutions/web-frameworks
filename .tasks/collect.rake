@@ -29,40 +29,17 @@ task :collect do
   concurrencies = ENV.fetch('CONCURRENCIES', '10')
   routes = ENV.fetch('ROUTES', 'GET:/')
   database = ENV.fetch('DATABASE_URL') { raise 'please provide a DATABASE_URL (pg only)' }
-  hostname = ENV.fetch('HOSTNAME')
+  hostname = "127.0.0.1"
   engine = ENV.fetch('ENGINE')
 
   `wrk -H 'Connection: keep-alive' -d 5s -c 8 --timeout 8 -t #{threads} http://#{hostname}:3000`
   `wrk -H 'Connection: keep-alive' -d #{duration}s -c 256 --timeout 8 -t #{threads} http://#{hostname}:3000`
 
-  db = PG.connect(database)
-
-  res = db.query(
-    'INSERT INTO languages (label) VALUES ($1) ON CONFLICT (label) DO UPDATE SET label = $1 RETURNING id', [language]
-  )
-  language_id = res.first['id']
-
-  res = db.query(
-    'INSERT INTO engines (label) VALUES ($1) ON CONFLICT (label) DO UPDATE SET label = $1 RETURNING id', [engine]
-  )
-  engine_id = res.first['id']
-
-  res = db.query(
-    'INSERT INTO frameworks (language_id, label) VALUES ($1, $2) ON CONFLICT (language_id, label) DO UPDATE SET label = $2 RETURNING id', [
-      language_id, framework
-    ]
-  )
-  framework_id = res.first['id']
 
   routes.split(',').each do |route|
     method, uri = route.split(':')
 
     concurrencies.split(',').each do |concurrency|
-      res = db.query(
-        'INSERT INTO concurrencies (level) VALUES ($1) ON CONFLICT (level) DO UPDATE SET level = $1 RETURNING id', [concurrency]
-      )
-
-      concurrency_level_id = res.first['id']
 
       command = format(
         "wrk -H 'Connection: keep-alive' --connections %<concurrency>s --threads %<threads>s --duration %<duration>s --timeout 1 --script %<pipeline>s http://%<hostname>s:3000#{uri}", concurrency:, threads:, duration:, pipeline: PIPELINE[method.to_sym], hostname:
@@ -86,11 +63,8 @@ task :collect do
         pp "LUA : #{lua_output}"
 
         info = lua_output.split(',')
-        lua_keys.each_with_index do |key, index|
-          insert(db, framework_id, key, info[index].to_d, concurrency_level_id, engine_id)
-        end
+
       end
     end
   end
-  db.close
 end

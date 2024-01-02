@@ -6,7 +6,7 @@ gem 'dotenv'
 gem 'git'
 gem 'mustache'
 gem 'open3'
-gem 'pg'
+#gem 'pg'
 gem 'rake'
 
 group :development, :test do

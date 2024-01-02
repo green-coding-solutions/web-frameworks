@@ -16,6 +16,5 @@ RSpec.configure do |config|
 end
 
 def http
-  ip = File.read(File.join(ENV["LANGUAGE"], ENV["FRAMEWORK"], "ip-#{ENV["ENGINE"]}.txt")).strip
-  Net::HTTP.new(ip, 3000)
+  Net::HTTP.new("127.0.0.1", 3000)
 end

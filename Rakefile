@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'yaml'
+require 'mustache'
 require "dotenv"
 require "active_support"
 
