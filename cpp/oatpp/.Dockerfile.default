@@ -1,0 +1,38 @@
+FROM debian:bookworm
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+RUN apt-get -qy install build-essential git cmake
+
+
+  COPY 'CMakeLists.txt' 'CMakeLists.txt'
+  COPY 'src/controller/MyController.hpp' 'src/controller/MyController.hpp'
+  COPY 'src/AppComponent.hpp' 'src/AppComponent.hpp'
+  COPY 'src/controller/MyController.cpp' 'src/controller/MyController.cpp'
+  COPY 'src/App.cpp' 'src/App.cpp'
+  RUN git clone --depth=1 https://github.com/oatpp/oatpp.git
+  RUN mkdir oatpp/build
+  RUN cd oatpp/build && cmake -DOATPP_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release ..
+  RUN cd oatpp/build && make install -j 6
+
+   RUN mkdir build
+   RUN cd build && cmake -DOATPP_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release ..
+   RUN cd build && make
+
+FROM debian:bookworm
+
+
+WORKDIR /opt/web
+
+RUN apt-get -qq update
+
+
+  COPY 'CMakeLists.txt' 'CMakeLists.txt'
+  COPY 'src/controller/MyController.hpp' 'src/controller/MyController.hpp'
+  COPY 'src/AppComponent.hpp' 'src/AppComponent.hpp'
+  COPY 'src/controller/MyController.cpp' 'src/controller/MyController.cpp'
+  COPY 'src/App.cpp' 'src/App.cpp'
+  COPY --from=0 /usr/src/app/build/oat_benchmark build/oat_benchmark
+
+CMD /opt/web/build/oat_benchmark

@@ -1,0 +1,30 @@
+FROM node:21-slim
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+
+  COPY '.adonisrc.json' '.adonisrc.json'
+  COPY 'ace' 'ace'
+  COPY 'ace-manifest.json' 'ace-manifest.json'
+  COPY 'package.json' 'package.json'
+  COPY 'config/drive.ts' 'config/drive.ts'
+  COPY 'config/bodyparser.ts' 'config/bodyparser.ts'
+  COPY 'config/static.ts' 'config/static.ts'
+  COPY 'config/app.ts' 'config/app.ts'
+  COPY 'config/hash.ts' 'config/hash.ts'
+  COPY 'config/cors.ts' 'config/cors.ts'
+  COPY 'app.ts' 'app.ts'
+  COPY 'tsconfig.json' 'tsconfig.json'
+
+
+  RUN npm install -g typescript
+  RUN npm link typescript
+  RUN node ace build --production
+  RUN npm --location=global install pm2
+  RUN npm install
+
+  ENV NODE_ENV=production
+
+
+CMD pm2-runtime start build/app.js -i $(nproc)

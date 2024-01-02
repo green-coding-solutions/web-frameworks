@@ -1,0 +1,33 @@
+
+  FROM maven:3-eclipse-temurin-21 AS build
+
+WORKDIR /usr/src/web
+
+  COPY 'src/main/java/org/apache/struts/benchmarker/example/UserAction.java' 'src/main/java/org/apache/struts/benchmarker/example/UserAction.java'
+  COPY 'src/main/java/App.java' 'src/main/java/App.java'
+  COPY 'pom.xml' 'pom.xml'
+  COPY 'src/etc/assembly.xml' 'src/etc/assembly.xml'
+  COPY 'src/main/resources/log4j2.xml' 'src/main/resources/log4j2.xml'
+  COPY 'src/main/resources/struts.xml' 'src/main/resources/struts.xml'
+  COPY 'src/main/webapp/WEB-INF/web.xml' 'src/main/webapp/WEB-INF/web.xml'
+
+
+
+  RUN mvn clean package
+
+
+  FROM eclipse-temurin:21-jre
+
+
+WORKDIR /opt/web
+
+  RUN ln -sfv /usr/local/openjdk-21/bin/java /usr/bin/java
+
+  COPY --from=build /usr/src/web/target/benchmark-1.0.0-standalone.jar target/benchmark-1.0.0-standalone.jar
+
+
+RUN ln -sfv /opt/java/openjdk/bin/java /usr/bin/java
+
+
+
+CMD java -jar target/benchmark-1.0.0-standalone.jar --port 3000

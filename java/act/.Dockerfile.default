@@ -1,0 +1,33 @@
+  FROM maven:3-eclipse-temurin-11 AS build
+
+
+WORKDIR /usr/src/web
+
+  COPY 'src/main/java/benchmark/act/AppEntry.java' 'src/main/java/benchmark/act/AppEntry.java'
+  COPY 'pom.xml' 'pom.xml'
+  COPY 'src/main/resources/conf/app.properties' 'src/main/resources/conf/app.properties'
+  COPY 'src/main/resources/logback.xml' 'src/main/resources/logback.xml'
+  COPY 'src/main/resources/test/scenarios.yml' 'src/main/resources/test/scenarios.yml'
+
+
+
+  RUN mvn package
+  RUN mv target/dist/benchmark-1.0.0-*.tar.gz target/dist/benchmark-1.0.0.tar.gz
+
+
+  FROM eclipse-temurin:11-jre
+
+
+WORKDIR /opt/web
+
+  RUN ln -sfv /usr/local/openjdk-11/bin/java /usr/bin/java
+
+  COPY --from=build /usr/src/web/target/dist/benchmark-1.0.0.tar.gz target/dist/benchmark-1.0.0.tar.gz
+
+
+RUN ln -sfv /opt/java/openjdk/bin/java /usr/bin/java
+
+  RUN tar -xvzf target/dist/benchmark-1.0.0.tar.gz
+
+
+CMD /opt/web/run

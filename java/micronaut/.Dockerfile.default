@@ -1,0 +1,38 @@
+  FROM gradle:jdk21-jammy AS build
+
+
+WORKDIR /usr/src/web
+
+  COPY 'src/main/java/com/example/Application.java' 'src/main/java/com/example/Application.java'
+  COPY 'src/main/java/com/example/controller/ApplicationController.java' 'src/main/java/com/example/controller/ApplicationController.java'
+  COPY 'src/main/resources/application.properties' 'src/main/resources/application.properties'
+  COPY 'src/main/resources/logback.xml' 'src/main/resources/logback.xml'
+  COPY 'build.gradle.kts' 'build.gradle.kts'
+  COPY 'settings.gradle.kts' 'settings.gradle.kts'
+  COPY 'gradle.properties' 'gradle.properties'
+  COPY 'src/main/resources/application.properties' 'src/main/resources/application.properties'
+
+
+  USER root
+  RUN chown -R gradle .
+  USER gradle
+
+  RUN gradle build --project-cache-dir ~/.gradle
+
+
+  FROM eclipse-temurin:21-jre
+
+
+WORKDIR /opt/web
+
+  RUN ln -sfv /usr/local/openjdk-21/bin/java /usr/bin/java
+
+  COPY --from=build /usr/src/web/build/distributions/web-0.1.tar build/distributions/web-0.1.tar
+
+
+RUN ln -sfv /opt/java/openjdk/bin/java /usr/bin/java
+
+  RUN tar -xvf build/distributions/web-0.1.tar
+
+
+CMD /opt/web/web-0.1/bin/web

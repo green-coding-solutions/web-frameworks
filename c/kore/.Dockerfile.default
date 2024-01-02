@@ -1,0 +1,36 @@
+FROM debian:bullseye
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+RUN apt-get -qy install build-essential wget
+
+  RUN apt-get -qy install libssl-dev
+
+  COPY 'hello/src/hello.c' 'hello/src/hello.c'
+  COPY 'hello/conf/build.conf' 'hello/conf/build.conf'
+  COPY 'hello/conf/hello.conf' 'hello/conf/hello.conf'
+
+  RUN wget -c https://github.com/jorisvink/kore/archive/3.3.1-release.tar.gz
+  RUN tar -xvf 3.3.1-release.tar.gz
+  RUN cd kore-3.3.1-release && TASKS=1 NOTLS=1 make && make install
+
+   RUN cd hello && kodev build
+   RUN mv /usr/local/bin/kore kore
+   RUN mv hello/hello.so .
+
+FROM debian:bullseye
+
+WORKDIR /opt/web
+
+RUN apt-get -qq update
+
+   RUN apt-get -qy install openssl
+
+   COPY --from=0 /usr/src/app/kore kore
+   COPY --from=0 /usr/src/app/hello.so hello.so
+
+  COPY 'hello/conf/hello.conf' 'hello/conf/hello.conf'
+
+
+CMD /opt/web/kore -f -n -r -c /opt/web/hello/conf/hello.conf

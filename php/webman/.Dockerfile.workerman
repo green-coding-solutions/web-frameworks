@@ -1,0 +1,48 @@
+  FROM php:8.3-fpm
+
+RUN apt-get -qq update
+RUN apt-get -qy install libzip-dev  libevent-dev  libssl-dev 
+
+WORKDIR /usr/src/app
+
+RUN docker-php-ext-install zip opcache
+
+
+
+  RUN docker-php-ext-install pcntl
+  RUN docker-php-ext-install sockets
+
+  RUN mkdir -p /usr/src/php/ext/event
+  RUN curl -fsSL https://pecl.php.net/get/event | tar xvz -C "/usr/src/php/ext/event" --strip 1
+  RUN docker-php-ext-install event
+
+ENV EVENT_EXT_FILE /usr/local/etc/php/conf.d/docker-php-ext-event.ini
+RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
+  rm -fr /usr/local/etc/php/conf.d/docker-php-ext-sockets.ini ; \
+  sed -i -e '1i extension=sockets.so' /usr/local/etc/php/conf.d/docker-php-ext-event.ini ; fi
+  
+
+  COPY 'app/controller/User.php' 'app/controller/User.php'
+  COPY 'config/container.php' 'config/container.php'
+  COPY 'config/server.php' 'config/server.php'
+  COPY 'config/app.php' 'config/app.php'
+  COPY 'config/bootstrap.php' 'config/bootstrap.php'
+  COPY 'config/route.php' 'config/route.php'
+  COPY 'config/log.php' 'config/log.php'
+  COPY 'support/bootstrap/Container.php' 'support/bootstrap/Container.php'
+  COPY 'support/bootstrap/Log.php' 'support/bootstrap/Log.php'
+  COPY 'support/Response.php' 'support/Response.php'
+  COPY 'support/bootstrap.php' 'support/bootstrap.php'
+  COPY 'support/Request.php' 'support/Request.php'
+  COPY 'support/helpers.php' 'support/helpers.php'
+  COPY 'start.php' 'start.php'
+  COPY 'composer.json' 'composer.json'
+
+
+    RUN curl -sSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    RUN composer install --no-dev --prefer-dist --classmap-authoritative
+    RUN composer dumpautoload -o
+
+  CMD php start.php start
+
+

@@ -1,0 +1,45 @@
+  FROM php:8.2-fpm
+
+RUN apt-get -qq update
+RUN apt-get -qy install libzip-dev  libevent-dev  libicu-dev  libssl-dev 
+
+WORKDIR /usr/src/app
+
+RUN docker-php-ext-install zip opcache
+
+
+
+  RUN docker-php-ext-install intl
+  RUN docker-php-ext-install sockets
+  RUN docker-php-ext-install pcntl
+
+  RUN mkdir -p /usr/src/php/ext/event
+  RUN curl -fsSL https://pecl.php.net/get/event | tar xvz -C "/usr/src/php/ext/event" --strip 1
+  RUN docker-php-ext-install event
+
+ENV EVENT_EXT_FILE /usr/local/etc/php/conf.d/docker-php-ext-event.ini
+RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
+  rm -fr /usr/local/etc/php/conf.d/docker-php-ext-sockets.ini ; \
+  sed -i -e '1i extension=sockets.so' /usr/local/etc/php/conf.d/docker-php-ext-event.ini ; fi
+  
+
+  COPY 'config/container.php' 'config/container.php'
+  COPY 'config/config.php' 'config/config.php'
+  COPY 'config/services/dependencies.prod.php' 'config/services/dependencies.prod.php'
+  COPY 'public/index.php' 'public/index.php'
+  COPY 'src/Handler/User.php' 'src/Handler/User.php'
+  COPY 'src/Handler/Home.php' 'src/Handler/Home.php'
+  COPY 'src/Handler/UserId.php' 'src/Handler/UserId.php'
+  COPY 'router/routes.php' 'router/routes.php'
+  COPY 'router/middleware.php' 'router/middleware.php'
+  COPY 'composer.json' 'composer.json'
+  COPY 'bin/console' 'bin/console'
+
+
+    RUN curl -sSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    RUN composer install --no-dev --prefer-dist --classmap-authoritative
+    RUN composer dumpautoload -o
+
+  CMD bin/console serve
+
+

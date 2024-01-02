@@ -1,0 +1,29 @@
+FROM crystallang/crystal:1.10
+
+WORKDIR /usr/src/app
+
+  COPY 'spec/welcome_spec.cr' 'spec/welcome_spec.cr'
+  COPY 'spec/spec_helper.cr' 'spec/spec_helper.cr'
+  COPY 'src/config.cr' 'src/config.cr'
+  COPY 'src/controllers/user.cr' 'src/controllers/user.cr'
+  COPY 'src/controllers/welcome.cr' 'src/controllers/welcome.cr'
+  COPY 'src/controllers/application.cr' 'src/controllers/application.cr'
+  COPY 'src/app.cr' 'src/app.cr'
+  COPY 'shard.yml' 'shard.yml'
+
+RUN apt-get -qq update
+
+
+RUN shards lock
+RUN shards install --production
+RUN shards build --release --no-debug --static
+
+FROM debian:stable-slim
+
+WORKDIR /usr/bin
+
+COPY --from=0 /usr/src/app/bin/server /usr/bin/app
+
+
+
+CMD /usr/bin/app

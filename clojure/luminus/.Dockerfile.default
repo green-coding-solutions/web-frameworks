@@ -1,0 +1,39 @@
+  FROM clojure:temurin-21-lein
+
+
+WORKDIR /usr/src/app
+
+  COPY 'project.clj' 'project.clj'
+  COPY 'env/prod/clj/luminus/env.clj' 'env/prod/clj/luminus/env.clj'
+  COPY 'env/dev/clj/user.clj' 'env/dev/clj/user.clj'
+  COPY 'env/dev/clj/luminus/env.clj' 'env/dev/clj/luminus/env.clj'
+  COPY 'env/dev/clj/luminus/dev_middleware.clj' 'env/dev/clj/luminus/dev_middleware.clj'
+  COPY 'src/clj/luminus/layout.clj' 'src/clj/luminus/layout.clj'
+  COPY 'src/clj/luminus/middleware/formats.clj' 'src/clj/luminus/middleware/formats.clj'
+  COPY 'src/clj/luminus/nrepl.clj' 'src/clj/luminus/nrepl.clj'
+  COPY 'src/clj/luminus/middleware.clj' 'src/clj/luminus/middleware.clj'
+  COPY 'src/clj/luminus/core.clj' 'src/clj/luminus/core.clj'
+  COPY 'src/clj/luminus/handler.clj' 'src/clj/luminus/handler.clj'
+  COPY 'src/clj/luminus/routes/home.clj' 'src/clj/luminus/routes/home.clj'
+  COPY 'src/clj/luminus/config.clj' 'src/clj/luminus/config.clj'
+  COPY 'env/prod/resources/config.edn' 'env/prod/resources/config.edn'
+  COPY 'env/test/resources/config.edn' 'env/test/resources/config.edn'
+  COPY 'env/dev/resources/config.edn' 'env/dev/resources/config.edn'
+  COPY 'env/prod/resources/logback.xml' 'env/prod/resources/logback.xml'
+  COPY 'env/test/resources/logback.xml' 'env/test/resources/logback.xml'
+  COPY 'env/dev/resources/logback.xml' 'env/dev/resources/logback.xml'
+  COPY 'resources/html/home.html' 'resources/html/home.html'
+  COPY 'resources/html/about.html' 'resources/html/about.html'
+  COPY 'resources/html/error.html' 'resources/html/error.html'
+
+  RUN lein uberjar
+
+
+FROM eclipse-temurin:21.0.1_12-jre
+
+WORKDIR /opt/bin
+
+
+  COPY --from=0 /usr/src/app/target/uberjar/luminus.jar /opt/bin/target/uberjar/luminus.jar 
+
+  CMD java -jar target/uberjar/luminus.jar 3000

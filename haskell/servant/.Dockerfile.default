@@ -1,0 +1,19 @@
+FROM haskell:9.8-slim
+
+WORKDIR /usr/src/app
+
+  COPY 'server.cabal' 'server.cabal'
+  COPY 'Setup.hs' 'Setup.hs'
+  COPY 'app/Main.hs' 'app/Main.hs'
+  COPY 'src/Lib.hs' 'src/Lib.hs'
+  COPY 'stack.yaml' 'stack.yaml'
+
+RUN stack build --install-ghc
+
+FROM debian:stable-slim
+
+WORKDIR /opt/web
+
+COPY --from=0 /usr/src/app/.stack-work/dist/x86_64-linux-tinfo6-libc6-pre232/Cabal-3.0.1.0/build/server/server server
+
+CMD /opt/web/server

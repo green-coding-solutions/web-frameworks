@@ -1,0 +1,18 @@
+  FROM python:3.11-slim
+
+WORKDIR /usr/src/app
+
+  ARG DEBIAN_FRONTEND=noninteractive
+  RUN apt-get -y update
+
+  RUN apt-get -y install build-essential
+
+  COPY server.py server.py
+  COPY requirements.txt requirements.txt
+  COPY nameko.yaml nameko.yaml
+
+
+
+RUN pip install -r requirements.txt
+
+CMD nameko run server --config nameko.yaml

@@ -1,0 +1,48 @@
+  FROM php:8.3-fpm
+
+RUN apt-get -qq update
+RUN apt-get -qy install libzip-dev 
+
+WORKDIR /usr/src/app
+
+RUN docker-php-ext-install zip opcache
+
+
+
+  RUN docker-php-ext-install pcntl
+
+  RUN mkdir -p /usr/src/php/ext/redis
+  RUN curl -fsSL https://pecl.php.net/get/redis | tar xvz -C "/usr/src/php/ext/redis" --strip 1
+  RUN docker-php-ext-install redis
+  RUN mkdir -p /usr/src/php/ext/swoole
+  RUN curl -fsSL https://pecl.php.net/get/swoole | tar xvz -C "/usr/src/php/ext/swoole" --strip 1
+  RUN docker-php-ext-install swoole
+
+ENV EVENT_EXT_FILE /usr/local/etc/php/conf.d/docker-php-ext-event.ini
+RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
+  rm -fr /usr/local/etc/php/conf.d/docker-php-ext-sockets.ini ; \
+  sed -i -e '1i extension=sockets.so' /usr/local/etc/php/conf.d/docker-php-ext-event.ini ; fi
+  
+
+  COPY 'app/Controller/IndexController.php' 'app/Controller/IndexController.php'
+  COPY 'app/Kernel/FastServer.php' 'app/Kernel/FastServer.php'
+  COPY 'config/container.php' 'config/container.php'
+  COPY 'config/config.php' 'config/config.php'
+  COPY 'config/routes.php' 'config/routes.php'
+  COPY 'config/autoload/annotations.php' 'config/autoload/annotations.php'
+  COPY 'config/autoload/server.php' 'config/autoload/server.php'
+  COPY 'config/autoload/commands.php' 'config/autoload/commands.php'
+  COPY 'config/dependencies.php' 'config/dependencies.php'
+  COPY 'sbin/hyperf.php' 'sbin/hyperf.php'
+  COPY 'composer.json' 'composer.json'
+
+
+    RUN curl -sSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    RUN composer install --no-dev --prefer-dist --classmap-authoritative
+    RUN composer dumpautoload -o
+    RUN echo "swoole.use_shortname = 'Off'" >> /usr/local/etc/php/conf.d/docker-php-ext-swoole.ini
+    RUN php sbin/hyperf.php
+
+  CMD php sbin/hyperf.php start
+
+

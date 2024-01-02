@@ -1,0 +1,54 @@
+FROM debian:bookworm
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+RUN apt-get -qy install build-essential git cmake
+
+  RUN apt-get -qy install libjsoncpp-dev
+  RUN apt-get -qy install libssl-dev
+  RUN apt-get -qy install zlib1g-dev
+  RUN apt-get -qy install libbrotli-dev
+  RUN apt-get -qy install uuid-dev
+
+  COPY 'CMakeLists.txt' 'CMakeLists.txt'
+  COPY 'plugins/SyncPlugin.h' 'plugins/SyncPlugin.h'
+  COPY 'controllers/UserCtrl.h' 'controllers/UserCtrl.h'
+  COPY 'main.cc' 'main.cc'
+  COPY 'plugins/SyncPlugin.cc' 'plugins/SyncPlugin.cc'
+  COPY 'controllers/UserCtrl.cc' 'controllers/UserCtrl.cc'
+  COPY 'cmake_modules/FindDrogon.cmake' 'cmake_modules/FindDrogon.cmake'
+  COPY 'cmake_modules/FindJsoncpp.cmake' 'cmake_modules/FindJsoncpp.cmake'
+  COPY 'config.json' 'config.json'
+  RUN git clone --branch v1.9.1 https://github.com/drogonframework/drogon
+  RUN cd drogon && git submodule update --init
+
+   RUN mkdir build
+   RUN cd build && cmake -DCMAKE_BUILD_TYPE=release ..
+   RUN cd build && make
+
+FROM debian:bookworm
+
+
+WORKDIR /opt/web
+
+RUN apt-get -qq update
+
+   RUN apt-get -qy install libjsoncpp25
+   RUN apt-get -qy install openssl
+   RUN apt-get -qy install zlib1g
+   RUN apt-get -qy install libbrotli1
+   RUN apt-get -qy install libuuid1
+
+  COPY 'CMakeLists.txt' 'CMakeLists.txt'
+  COPY 'plugins/SyncPlugin.h' 'plugins/SyncPlugin.h'
+  COPY 'controllers/UserCtrl.h' 'controllers/UserCtrl.h'
+  COPY 'main.cc' 'main.cc'
+  COPY 'plugins/SyncPlugin.cc' 'plugins/SyncPlugin.cc'
+  COPY 'controllers/UserCtrl.cc' 'controllers/UserCtrl.cc'
+  COPY 'cmake_modules/FindDrogon.cmake' 'cmake_modules/FindDrogon.cmake'
+  COPY 'cmake_modules/FindJsoncpp.cmake' 'cmake_modules/FindJsoncpp.cmake'
+  COPY 'config.json' 'config.json'
+  COPY --from=0 /usr/src/app/build/drogon_benchmark build/drogon_benchmark
+
+CMD /opt/web/build/drogon_benchmark /opt/web/config.json

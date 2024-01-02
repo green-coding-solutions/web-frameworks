@@ -1,0 +1,31 @@
+  FROM python:3.12-slim
+
+WORKDIR /usr/src/app
+
+  ARG DEBIAN_FRONTEND=noninteractive
+  RUN apt-get -y update
+
+  RUN apt-get -y install build-essential
+  RUN apt-get -y install gcc
+
+  COPY app/asgi.py app/asgi.py
+  COPY app/__init__.py app/__init__.py
+  COPY app/urls.py app/urls.py
+  COPY app/views.py app/views.py
+  COPY app/wsgi.py app/wsgi.py
+  COPY settings.py settings.py
+  COPY requirements.txt requirements.txt
+
+  RUN pip install gunicorn
+
+  ENV WORKER_CLASS=sync
+  ENV PYTHON_APP=server:app
+
+RUN pip install -r requirements.txt
+
+CMD gunicorn --log-level warning  \
+  --bind 0.0.0.0:3000  \
+  --reuse-port  \
+  --workers $(nproc) \
+  app.wsgi
+

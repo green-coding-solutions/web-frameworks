@@ -1,0 +1,44 @@
+  FROM python:3.11-slim
+
+WORKDIR /usr/src/app
+
+  ARG DEBIAN_FRONTEND=noninteractive
+  RUN apt-get -y update
+
+  RUN apt-get -y install libffi-dev
+  RUN apt-get -y install libssl-dev
+  RUN apt-get -y install curl
+  RUN apt-get -y install gcc
+  RUN apt-get -y install libpcre3-dev
+
+  COPY Kernel.py Kernel.py
+  COPY app/middlewares/VerifyCsrfToken.py app/middlewares/VerifyCsrfToken.py
+  COPY app/__init__.py app/__init__.py
+  COPY app/controllers/UserController.py app/controllers/UserController.py
+  COPY app/controllers/__init__.py app/controllers/__init__.py
+  COPY config/auth.py config/auth.py
+  COPY config/database.py config/database.py
+  COPY config/filesystem.py config/filesystem.py
+  COPY config/session.py config/session.py
+  COPY config/__init__.py config/__init__.py
+  COPY config/packages.py config/packages.py
+  COPY config/application.py config/application.py
+  COPY config/providers.py config/providers.py
+  COPY config/storage.py config/storage.py
+  COPY config/exceptions.py config/exceptions.py
+  COPY templates/__init__.py templates/__init__.py
+  COPY routes/web.py routes/web.py
+  COPY wsgi.py wsgi.py
+  COPY requirements.txt requirements.txt
+
+  RUN curl https://sh.rustup.rs > init.sh
+  RUN sh init.sh -y
+  RUN find $HOME/.cargo/bin -type f -exec install {} /usr/local/bin \;
+  RUN rustup default nightly
+  RUN pip install uwsgi
+
+  ENV PYTHON_APP=wsgi:application
+
+RUN pip install -r requirements.txt
+
+CMD uwsgi --http 0.0.0.0:3000 --module ${PYTHON_APP}

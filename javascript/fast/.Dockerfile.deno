@@ -1,0 +1,13 @@
+FROM denoland/deno:1.39.1
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+
+  RUN apt-get -qy install npm
+
+  RUN npm -g install pm2
+
+  COPY 'app.ts' 'app.ts'
+
+CMD nohup pm2-runtime start "deno run --allow-net --allow-read=. app.ts" -i max

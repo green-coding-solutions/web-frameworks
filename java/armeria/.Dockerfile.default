@@ -1,0 +1,28 @@
+
+  FROM maven:3-eclipse-temurin-21 AS build
+
+WORKDIR /usr/src/web
+
+  COPY 'src/main/java/benchmark/armeria/BenchmarkApplication.java' 'src/main/java/benchmark/armeria/BenchmarkApplication.java'
+  COPY 'pom.xml' 'pom.xml'
+
+
+
+  RUN mvn package
+
+
+  FROM eclipse-temurin:21-jre
+
+
+WORKDIR /opt/web
+
+  RUN ln -sfv /usr/local/openjdk-21/bin/java /usr/bin/java
+
+  COPY --from=build /usr/src/web/target/benchmark.jar target/benchmark.jar
+
+
+RUN ln -sfv /opt/java/openjdk/bin/java /usr/bin/java
+
+
+
+CMD /usr/bin/java -jar /opt/web/target/benchmark.jar

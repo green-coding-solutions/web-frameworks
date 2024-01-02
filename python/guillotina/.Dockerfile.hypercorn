@@ -1,0 +1,27 @@
+  FROM python:3.12-slim
+
+WORKDIR /usr/src/app
+
+  ARG DEBIAN_FRONTEND=noninteractive
+  RUN apt-get -y update
+
+  RUN apt-get -y install libffi-dev
+  RUN apt-get -y install curl
+  RUN apt-get -y install libssl-dev
+  RUN apt-get -y install build-essential
+  RUN apt-get -y install gcc g++
+
+  COPY server.py server.py
+  COPY requirements.txt requirements.txt
+
+  RUN curl https://sh.rustup.rs > init.sh
+  RUN sh init.sh -y
+  RUN find $HOME/.cargo/bin -type f -exec install {} /usr/local/bin \;
+  RUN rustup default nightly
+  RUN pip install hypercorn
+
+  ENV PYTHON_APP=server:app
+
+RUN pip install -r requirements.txt
+
+CMD hypercorn --bind 0.0.0.0:3000 --workers $(nproc) ${PYTHON_APP}

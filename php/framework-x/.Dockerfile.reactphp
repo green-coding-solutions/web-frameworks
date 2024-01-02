@@ -1,0 +1,37 @@
+  FROM php:8.3-fpm
+
+RUN apt-get -qq update
+RUN apt-get -qy install libzip-dev  libevent-dev  libicu-dev  libssl-dev 
+
+WORKDIR /usr/src/app
+
+RUN docker-php-ext-install zip opcache
+
+  ENV X_LISTEN=0.0.0.0:3000
+
+
+  RUN docker-php-ext-install intl
+  RUN docker-php-ext-install sockets
+  RUN docker-php-ext-install pcntl
+
+  RUN mkdir -p /usr/src/php/ext/event
+  RUN curl -fsSL https://pecl.php.net/get/event | tar xvz -C "/usr/src/php/ext/event" --strip 1
+  RUN docker-php-ext-install event
+
+ENV EVENT_EXT_FILE /usr/local/etc/php/conf.d/docker-php-ext-event.ini
+RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
+  rm -fr /usr/local/etc/php/conf.d/docker-php-ext-sockets.ini ; \
+  sed -i -e '1i extension=sockets.so' /usr/local/etc/php/conf.d/docker-php-ext-event.ini ; fi
+  
+
+  COPY 'app.php' 'app.php'
+  COPY 'composer.json' 'composer.json'
+
+
+    RUN curl -sSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    RUN composer install --no-dev --prefer-dist --classmap-authoritative
+    RUN composer dumpautoload -o
+
+  CMD php app.php
+
+

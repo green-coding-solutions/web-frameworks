@@ -1,0 +1,17 @@
+FROM node:21-slim
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+
+  COPY 'app.mjs' 'app.mjs'
+  COPY 'package.json' 'package.json'
+
+
+  RUN npm --location=global install pm2
+  RUN npm install
+
+  ENV NODE_ENV=production
+
+
+CMD pm2-runtime start app.mjs -i $(nproc)

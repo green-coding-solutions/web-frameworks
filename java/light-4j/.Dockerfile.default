@@ -1,0 +1,33 @@
+
+  FROM maven:3-eclipse-temurin-21 AS build
+
+WORKDIR /usr/src/web
+
+  COPY 'src/main/java/benchmark/handler/GetHandler.java' 'src/main/java/benchmark/handler/GetHandler.java'
+  COPY 'src/main/java/benchmark/handler/UserIdGetHandler.java' 'src/main/java/benchmark/handler/UserIdGetHandler.java'
+  COPY 'src/main/java/benchmark/handler/UserPostHandler.java' 'src/main/java/benchmark/handler/UserPostHandler.java'
+  COPY 'pom.xml' 'pom.xml'
+  COPY 'src/main/resources/config/server.yml' 'src/main/resources/config/server.yml'
+  COPY 'src/main/resources/config/handler.yml' 'src/main/resources/config/handler.yml'
+
+
+
+  RUN mvn clean package -Prelease
+
+
+  FROM eclipse-temurin:21-jre
+
+
+WORKDIR /opt/web
+
+  RUN ln -sfv /usr/local/openjdk-21/bin/java /usr/bin/java
+
+  COPY --from=build /usr/src/web/target/benchmark-1.0.0.jar target/benchmark-1.0.0.jar
+
+
+RUN ln -sfv /opt/java/openjdk/bin/java /usr/bin/java
+
+
+
+CMD /usr/bin/java -jar target/benchmark-1.0.0.jar
+

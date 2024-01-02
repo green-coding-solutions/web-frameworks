@@ -1,0 +1,42 @@
+FROM nimlang/nim:2.0.0
+
+RUN apt-get -qq update
+
+
+## set working directory
+WORKDIR /usr/src/app
+
+## Nim environment
+ENV NIM_ENV=production
+ENV NIMBLE_DIR=/home/nim/.nimble
+ENV PATH=$PATH:/home/nim/.nimble/bin
+
+
+  COPY 'server.nim' 'server.nim'
+  COPY 'server.nimble' 'server.nimble'
+
+ENV PATH $PATH:/root/.nimble/bin
+
+  RUN nimble install -y
+
+  RUN nim c  \
+    --assertions:off \
+    --warnings:off \
+    --hints:off \
+    -d:release \
+    --opt:speed \
+    --passC:-flto \
+    --passL:-flto \
+    server.nim
+
+FROM debian:stable
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+
+RUN apt-get -qy install libssl-dev libpcre3-dev
+
+  COPY --from=0 /usr/src/app/server /usr/src/app/server
+
+  CMD /usr/src/app/server

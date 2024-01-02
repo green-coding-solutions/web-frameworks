@@ -1,0 +1,32 @@
+---
+name: Web Frameworks Energy Test
+author: Arne Tarara <arne@green-coding.berlin>
+description: Energy test on top of the splendid performance tests for web frameworks from https://github.com/the-benchmarker/web-frameworks
+
+sci:
+  R_d: request
+
+services:
+  runner:
+    image: ruby:3.3.0-bookworm
+    setup-commands:
+      - apt update
+      - apt install wrk -y
+
+  framework:
+    build:
+      dockerfile: .Dockerfile.node
+      context: javascript/chubbyts
+    shell: sh
+
+flow:
+
+  - name: Benchmark
+    container: runner
+    commands:
+      - type: console
+        shell: bash
+        command: cd /tmp/repo && HOSTNAME=framework ENGINE=node LANGUAGE=javascript FRAMEWORK=chubbyts DATABASE_URL=None bundle exec rake collect
+        log-stdout: true
+        read-notes-stdout: true
+        read-sci-stdout: true

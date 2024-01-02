@@ -1,0 +1,45 @@
+FROM nimlang/nim:2.0.0
+
+RUN apt-get -qq update
+
+  RUN apt-get -qy install gcc
+  RUN apt-get -qy install openssl
+  RUN apt-get -qy install openssh-client
+  RUN apt-get -qy install libpcre2-dev
+
+## set working directory
+WORKDIR /usr/src/app
+
+## Nim environment
+ENV NIM_ENV=production
+ENV NIMBLE_DIR=/home/nim/.nimble
+ENV PATH=$PATH:/home/nim/.nimble/bin
+
+
+  COPY 'resources/lang/ja/validation.json' 'resources/lang/ja/validation.json'
+  COPY 'resources/lang/en/validation.json' 'resources/lang/en/validation.json'
+  COPY 'config.nims' 'config.nims'
+  COPY 'app/http/controllers/benchmark_controller.nim' 'app/http/controllers/benchmark_controller.nim'
+  COPY 'main.nim' 'main.nim'
+  COPY 'basolato.nimble' 'basolato.nimble'
+  COPY '.env' '.env'
+
+ENV PATH $PATH:/root/.nimble/bin
+
+  RUN nimble install -y
+
+  RUN ducere build -p 3000
+
+FROM debian:stable
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+
+RUN apt-get -qy install libssl-dev libpcre3-dev
+
+  COPY --from=0 /usr/src/app/main /usr/src/app/main
+  COPY --from=0 /usr/src/app/startServer.sh /usr/src/app/startServer.sh
+  COPY --from=0 /usr/src/app/.env /usr/src/app/.env
+
+  CMD ./startServer.sh

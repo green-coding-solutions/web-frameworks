@@ -1,0 +1,18 @@
+FROM gradle:jdk21 AS build
+
+WORKDIR /usr/src/app
+
+  COPY 'build.gradle' 'build.gradle'
+  COPY 'settings.gradle' 'settings.gradle'
+  COPY 'src/main/kotlin/benchmark/App.kt' 'src/main/kotlin/benchmark/App.kt'
+
+RUN gradle build
+
+FROM eclipse-temurin:21.0.1_12-jre-jammy
+
+WORKDIR /usr/src/app
+
+COPY --from=build /usr/src/app/build/libs/server.jar /usr/src/app/build/libs/server.jar
+
+CMD java -server -jar /usr/src/app/build/libs/server.jar
+

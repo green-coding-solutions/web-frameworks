@@ -1,0 +1,16 @@
+FROM node:21-slim
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+
+  COPY 'app.js' 'app.js'
+  COPY 'package.json' 'package.json'
+
+
+  RUN npm install
+
+  ENV NODE_ENV=production
+
+
+CMD node app.js

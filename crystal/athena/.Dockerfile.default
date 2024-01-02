@@ -1,0 +1,24 @@
+FROM crystallang/crystal:1.10
+
+WORKDIR /usr/src/app
+
+  COPY 'src/server.cr' 'src/server.cr'
+  COPY 'shard.yml' 'shard.yml'
+
+RUN apt-get -qq update
+
+
+RUN shards lock
+RUN shards install --production
+RUN shards build --release --no-debug --static
+
+FROM debian:stable-slim
+
+WORKDIR /usr/bin
+
+COPY --from=0 /usr/src/app/bin/server /usr/bin/app
+
+
+  ENV ATHENA_ENV=production
+
+CMD /usr/bin/app

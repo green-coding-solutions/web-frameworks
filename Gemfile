@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'activesupport'
-#gem 'bigdecimal'
+gem 'bigdecimal'
 gem 'dotenv'
 gem 'git'
 gem 'mustache'

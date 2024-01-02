@@ -1,0 +1,27 @@
+FROM golang:1.21
+
+WORKDIR /go/src/app
+
+
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+ENV GOARCH=amd64
+
+  COPY 'main.go' 'main.go'
+  COPY 'go.mod' 'go.mod'
+
+
+RUN go get
+RUN go build -a -ldflags '-extldflags "-static"'  -o /go/bin/app ./
+
+
+FROM debian:stable
+
+WORKDIR /go/bin
+
+ENV GOJI_BIND=0.0.0.0:3000
+
+COPY --from=0 /go/bin/app /go/bin/app
+
+
+CMD /go/bin/app

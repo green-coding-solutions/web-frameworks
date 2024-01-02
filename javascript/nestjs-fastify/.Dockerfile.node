@@ -1,0 +1,25 @@
+FROM node:21-slim
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+
+  COPY 'nest-cli.json' 'nest-cli.json'
+  COPY 'src/app.ts' 'src/app.ts'
+  COPY 'src/app.module.ts' 'src/app.module.ts'
+  COPY 'src/app.controller.ts' 'src/app.controller.ts'
+  COPY 'tsconfig.build.json' 'tsconfig.build.json'
+  COPY 'tsconfig.json' 'tsconfig.json'
+  COPY 'package.json' 'package.json'
+
+
+  RUN npm -g install @nestjs/cli
+  RUN npm install
+  RUN nest build
+  RUN npm --location=global install pm2
+  RUN npm install
+
+  ENV NODE_ENV=production
+
+
+CMD pm2-runtime start dist/app.js -i $(nproc)

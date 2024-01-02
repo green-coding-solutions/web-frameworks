@@ -1,0 +1,19 @@
+FROM node:21-slim
+
+WORKDIR /usr/src/app
+
+RUN apt-get -qq update
+
+  COPY 'app.js' 'app.js'
+  COPY 'package.json' 'package.json'
+
+  RUN apt-get -qy install git
+
+  RUN npm --location=global install pm2
+  RUN npm install
+
+  ENV NODE_ENV=production
+  ENV EXPERIMENTAL_FASTCALL=1
+
+
+CMD pm2-runtime start app.js -i $(nproc)

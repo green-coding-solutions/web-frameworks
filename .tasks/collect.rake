@@ -1,7 +1,7 @@
 require 'open3'
 require 'csv'
 require 'etc'
-#require 'bigdecimal/util'
+require 'bigdecimal/util'
 
 PIPELINE = {
   GET: File.join(Dir.pwd, 'pipeline.lua'),

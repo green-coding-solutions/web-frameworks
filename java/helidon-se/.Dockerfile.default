@@ -1,0 +1,31 @@
+
+  FROM maven:3-eclipse-temurin-21 AS build
+
+WORKDIR /usr/src/web
+
+  COPY 'src/main/java/web/helidon/UserService.java' 'src/main/java/web/helidon/UserService.java'
+  COPY 'src/main/java/web/helidon/IndexService.java' 'src/main/java/web/helidon/IndexService.java'
+  COPY 'src/main/java/web/helidon/Main.java' 'src/main/java/web/helidon/Main.java'
+  COPY 'pom.xml' 'pom.xml'
+  COPY 'src/main/resources/application.properties' 'src/main/resources/application.properties'
+
+
+
+  RUN mvn clean install -Pjlink-image
+
+
+  FROM eclipse-temurin:21-jre
+
+
+WORKDIR /opt/web
+
+  RUN ln -sfv /usr/local/openjdk-21/bin/java /usr/bin/java
+
+  COPY --from=build /usr/src/web/target/helidon.webserver-jri target/helidon.webserver-jri
+
+
+RUN ln -sfv /opt/java/openjdk/bin/java /usr/bin/java
+
+
+
+CMD /opt/web/target/helidon.webserver-jri/bin/start

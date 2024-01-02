@@ -1,0 +1,31 @@
+
+  FROM maven:3-eclipse-temurin-21 AS build
+
+WORKDIR /usr/src/web
+
+  COPY 'src/main/java/org/restheart/UserService.java' 'src/main/java/org/restheart/UserService.java'
+  COPY 'src/main/java/org/restheart/RootService.java' 'src/main/java/org/restheart/RootService.java'
+  COPY 'pom.xml' 'pom.xml'
+  COPY 'etc/conf-overrides.yml' 'etc/conf-overrides.yml'
+
+
+
+  RUN mvn package
+
+
+  FROM eclipse-temurin:21-jre
+
+
+WORKDIR /opt/web
+
+  RUN ln -sfv /usr/local/openjdk-21/bin/java /usr/bin/java
+
+  COPY --from=build /usr/src/web/etc/conf-overrides.yml etc/conf-overrides.yml
+  COPY --from=build /usr/src/web/target/benchmark.jar target/benchmark.jar
+
+
+RUN ln -sfv /opt/java/openjdk/bin/java /usr/bin/java
+
+
+
+CMD /usr/bin/java -jar /opt/web/target/benchmark.jar -o /opt/web/etc/conf-overrides.yml

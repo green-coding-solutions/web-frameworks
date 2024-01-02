@@ -1,0 +1,20 @@
+  FROM clojure:temurin-21-lein
+
+
+WORKDIR /usr/src/app
+
+  COPY 'project.clj' 'project.clj'
+  COPY 'src/the_benchmarker_pedestal/server.clj' 'src/the_benchmarker_pedestal/server.clj'
+  COPY 'src/the_benchmarker_pedestal/service.clj' 'src/the_benchmarker_pedestal/service.clj'
+
+  RUN lein uberjar
+
+
+FROM eclipse-temurin:21.0.1_12-jre
+
+WORKDIR /opt/bin
+
+
+  COPY --from=0 /usr/src/app/target/the-benchmarker-pedestal-0.0.1-SNAPSHOT-standalone.jar /opt/bin/target/the-benchmarker-pedestal-0.0.1-SNAPSHOT-standalone.jar 
+
+  CMD java -jar target/the-benchmarker-pedestal-0.0.1-SNAPSHOT-standalone.jar

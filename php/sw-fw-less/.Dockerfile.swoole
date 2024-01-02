@@ -1,0 +1,46 @@
+  FROM php:8.3-fpm
+
+RUN apt-get -qq update
+RUN apt-get -qy install libzip-dev  libsodium-dev 
+
+WORKDIR /usr/src/app
+
+RUN docker-php-ext-install zip opcache
+
+
+
+  RUN docker-php-ext-install sodium
+  RUN docker-php-ext-install bcmath
+  RUN docker-php-ext-install sockets
+
+  RUN mkdir -p /usr/src/php/ext/swoole
+  RUN curl -fsSL https://pecl.php.net/get/swoole | tar xvz -C "/usr/src/php/ext/swoole" --strip 1
+  RUN docker-php-ext-install swoole
+
+ENV EVENT_EXT_FILE /usr/local/etc/php/conf.d/docker-php-ext-event.ini
+RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
+  rm -fr /usr/local/etc/php/conf.d/docker-php-ext-sockets.ini ; \
+  sed -i -e '1i extension=sockets.so' /usr/local/etc/php/conf.d/docker-php-ext-event.ini ; fi
+  
+
+  COPY 'app/services/TestService.php' 'app/services/TestService.php'
+  COPY 'config/server.php' 'config/server.php'
+  COPY 'config/app.php' 'config/app.php'
+  COPY 'config/events.php' 'config/events.php'
+  COPY 'config/pool.php' 'config/pool.php'
+  COPY 'config/coroutine.php' 'config/coroutine.php'
+  COPY 'config/router.php' 'config/router.php'
+  COPY 'config/log.php' 'config/log.php'
+  COPY 'config/providers.php' 'config/providers.php'
+  COPY 'config/middleware.php' 'config/middleware.php'
+  COPY 'start.php' 'start.php'
+  COPY 'composer.json' 'composer.json'
+
+
+    RUN curl -sSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    RUN composer install --no-dev --prefer-dist --classmap-authoritative
+    RUN composer dumpautoload -o
+
+  CMD php start.php
+
+

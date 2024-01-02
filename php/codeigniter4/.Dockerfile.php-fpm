@@ -1,0 +1,113 @@
+  FROM php:8.3-fpm
+
+RUN apt-get -qq update
+RUN apt-get -qy install libzip-dev  nginx 
+
+WORKDIR /usr/src/app
+
+RUN docker-php-ext-install zip opcache
+
+  ENV CI_ENVIRONMENT=production
+
+  RUN apt-get -qy install libicu-dev
+
+  RUN docker-php-ext-install intl
+
+
+ENV EVENT_EXT_FILE /usr/local/etc/php/conf.d/docker-php-ext-event.ini
+RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
+  rm -fr /usr/local/etc/php/conf.d/docker-php-ext-sockets.ini ; \
+  sed -i -e '1i extension=sockets.so' /usr/local/etc/php/conf.d/docker-php-ext-event.ini ; fi
+  
+
+  COPY 'app/Config/Email.php' 'app/Config/Email.php'
+  COPY 'app/Config/Autoload.php' 'app/Config/Autoload.php'
+  COPY 'app/Config/ContentSecurityPolicy.php' 'app/Config/ContentSecurityPolicy.php'
+  COPY 'app/Config/Paths.php' 'app/Config/Paths.php'
+  COPY 'app/Config/Generators.php' 'app/Config/Generators.php'
+  COPY 'app/Config/Logger.php' 'app/Config/Logger.php'
+  COPY 'app/Config/Filters.php' 'app/Config/Filters.php'
+  COPY 'app/Config/Encryption.php' 'app/Config/Encryption.php'
+  COPY 'app/Config/App.php' 'app/Config/App.php'
+  COPY 'app/Config/Boot/testing.php' 'app/Config/Boot/testing.php'
+  COPY 'app/Config/Boot/production.php' 'app/Config/Boot/production.php'
+  COPY 'app/Config/Boot/development.php' 'app/Config/Boot/development.php'
+  COPY 'app/Config/UserAgents.php' 'app/Config/UserAgents.php'
+  COPY 'app/Config/Feature.php' 'app/Config/Feature.php'
+  COPY 'app/Config/Kint.php' 'app/Config/Kint.php'
+  COPY 'app/Config/Migrations.php' 'app/Config/Migrations.php'
+  COPY 'app/Config/Services.php' 'app/Config/Services.php'
+  COPY 'app/Config/Database.php' 'app/Config/Database.php'
+  COPY 'app/Config/Cache.php' 'app/Config/Cache.php'
+  COPY 'app/Config/Session.php' 'app/Config/Session.php'
+  COPY 'app/Config/Cookie.php' 'app/Config/Cookie.php'
+  COPY 'app/Config/Toolbar.php' 'app/Config/Toolbar.php'
+  COPY 'app/Config/Events.php' 'app/Config/Events.php'
+  COPY 'app/Config/Mimes.php' 'app/Config/Mimes.php'
+  COPY 'app/Config/DocTypes.php' 'app/Config/DocTypes.php'
+  COPY 'app/Config/Constants.php' 'app/Config/Constants.php'
+  COPY 'app/Config/Routing.php' 'app/Config/Routing.php'
+  COPY 'app/Config/Publisher.php' 'app/Config/Publisher.php'
+  COPY 'app/Config/CURLRequest.php' 'app/Config/CURLRequest.php'
+  COPY 'app/Config/View.php' 'app/Config/View.php'
+  COPY 'app/Config/Modules.php' 'app/Config/Modules.php'
+  COPY 'app/Config/Routes.php' 'app/Config/Routes.php'
+  COPY 'app/Config/Validation.php' 'app/Config/Validation.php'
+  COPY 'app/Config/ForeignCharacters.php' 'app/Config/ForeignCharacters.php'
+  COPY 'app/Config/Exceptions.php' 'app/Config/Exceptions.php'
+  COPY 'app/Config/Security.php' 'app/Config/Security.php'
+  COPY 'app/Config/Honeypot.php' 'app/Config/Honeypot.php'
+  COPY 'app/Config/Format.php' 'app/Config/Format.php'
+  COPY 'app/Config/Images.php' 'app/Config/Images.php'
+  COPY 'app/Config/Pager.php' 'app/Config/Pager.php'
+  COPY 'app/Common.php' 'app/Common.php'
+  COPY 'app/Controllers/User.php' 'app/Controllers/User.php'
+  COPY 'app/Controllers/Home.php' 'app/Controllers/Home.php'
+  COPY 'app/Controllers/BaseController.php' 'app/Controllers/BaseController.php'
+  COPY 'public/index.php' 'public/index.php'
+  COPY 'composer.json' 'composer.json'
+
+
+    RUN curl -sSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    RUN composer install --no-dev --prefer-dist --classmap-authoritative
+    RUN composer dumpautoload -o
+    RUN mkdir writable/cache -p
+    RUN chown -R www-data:www-data writable/cache
+
+
+    RUN sed -i 's/\;prefix.*/prefix = \/usr\/src\/app\/public/g' /usr/local/etc/php-fpm.d/www.conf
+  RUN sed -i 's/\(listen =\).*/\1 \/var\/run\/php-fpm.sock/g' /usr/local/etc/php-fpm.d/www.conf
+  RUN sed -i 's/\;\(listen\.owner.*\).*/\1/g' /usr/local/etc/php-fpm.d/www.conf
+  RUN sed -i 's/\;\(listen\.group.*\).*/\1/g' /usr/local/etc/php-fpm.d/www.conf
+  RUN sed -i 's/\;\(listen\.mode.*\).*/\1/g' /usr/local/etc/php-fpm.d/www.conf
+  # pm.max_children set according to nproc
+  RUN if [ $(nproc) = 1 ] ; then sed -i 's/\(pm\.max_children =\).*/\1 512/g' /usr/local/etc/php-fpm.d/www.conf ; else sed -i 's/\(pm\.max_children =\).*/\1 1024/g' /usr/local/etc/php-fpm.d/www.conf ; fi 
+  # after 15 seconds warm-up, half of the 'idle' children are not killed
+  RUN if [ $(nproc) = 1 ] ; then sed -i 's/\(pm\.max_spare_servers =\).*/\1 256/g' /usr/local/etc/php-fpm.d/www.conf ; else sed -i 's/\(pm\.max_spare_servers =\).*/\1 512/g' /usr/local/etc/php-fpm.d/www.conf ; fi 
+  
+  RUN rm -fr /usr/local/etc/php-fpm.d/zz-docker.conf
+  
+  RUN echo 'server {\n\
+        root /usr/src/app/public;\n\
+      listen 0.0.0.0:3000;\n\
+        location / {\n\
+          try_files $uri $uri/ /index.php;\n\
+          fastcgi_pass unix:/var/run/php-fpm.sock;\n\
+          fastcgi_param   SCRIPT_FILENAME         $document_root/index.php;\n\
+          include fastcgi_params;\n\
+        }\n\
+  }\n'\
+  > /etc/nginx/conf.d/server.conf
+  
+  RUN echo 'opcache.enable=1\n\
+  opcache.memory_consumption=512\n\
+  opcache.interned_strings_buffer=64\n\
+  opcache.max_accelerated_sources=32531\n\
+  opcache.validate_timestamps=0\n\
+  opcache.save_comments=1\n\
+  opcache.fast_shutdown=0\n'\
+  >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
+  
+  CMD /usr/local/sbin/php-fpm --daemonize; nginx -g "daemon off;"
+
+

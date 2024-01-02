@@ -1,0 +1,35 @@
+  FROM php:8.3-fpm
+
+RUN apt-get -qq update
+RUN apt-get -qy install libzip-dev  libevent-dev  libsodium-dev 
+
+WORKDIR /usr/src/app
+
+RUN docker-php-ext-install zip opcache
+
+
+
+  RUN docker-php-ext-install sodium
+  RUN docker-php-ext-install sockets
+  RUN docker-php-ext-install sockets
+
+
+ENV EVENT_EXT_FILE /usr/local/etc/php/conf.d/docker-php-ext-event.ini
+RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
+  rm -fr /usr/local/etc/php/conf.d/docker-php-ext-sockets.ini ; \
+  sed -i -e '1i extension=sockets.so' /usr/local/etc/php/conf.d/docker-php-ext-event.ini ; fi
+  
+
+  COPY 'worker.php' 'worker.php'
+  COPY 'composer.json' 'composer.json'
+  COPY '.rr.yaml' '.rr.yaml'
+
+
+    RUN curl -sSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    RUN composer install --no-dev --prefer-dist --classmap-authoritative
+    RUN composer dumpautoload -o
+    RUN vendor/bin/rr get-binary
+
+  CMD ./rr serve
+
+
