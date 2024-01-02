@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'activesupport'
-gem 'bigdecimal'
+#gem 'bigdecimal'
 gem 'dotenv'
 gem 'git'
 gem 'mustache'
@@ -11,7 +11,7 @@ gem 'rake'
 
 group :development, :test do
   gem 'rspec'
-  gem 'rubocop'
-  gem 'rubocop-rake'
-  gem 'rubocop-rspec'
+#  gem 'rubocop'
+#  gem 'rubocop-rake'
+#  gem 'rubocop-rspec'
 end

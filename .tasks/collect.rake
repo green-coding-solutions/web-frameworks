@@ -1,25 +1,13 @@
 require 'open3'
 require 'csv'
 require 'etc'
-require 'bigdecimal/util'
+#require 'bigdecimal/util'
 
 PIPELINE = {
   GET: File.join(Dir.pwd, 'pipeline.lua'),
   POST: File.join(Dir.pwd, 'pipeline_post.lua')
 }.freeze
 
-def insert(db, framework_id, metric, value, concurrency_level_id, engine_id)
-  res = db.query('INSERT INTO keys (label) VALUES ($1) ON CONFLICT (label) DO UPDATE SET label = $1 RETURNING id',
-                 [metric])
-
-  metric_id = res.first['id']
-
-  res = db.query('INSERT INTO values (key_id, value) VALUES ($1, $2) RETURNING id', [metric_id, value])
-  value_id = res.first['id']
-
-  db.query('INSERT INTO metrics (value_id, framework_id, concurrency_id, engine_id) VALUES ($1, $2, $3, $4)',
-           [value_id, framework_id, concurrency_level_id, engine_id])
-end
 
 task :collect do
   threads = ENV.fetch('THREADS') { Etc.nprocessors }
@@ -29,7 +17,7 @@ task :collect do
   concurrencies = ENV.fetch('CONCURRENCIES', '10')
   routes = ENV.fetch('ROUTES', 'GET:/')
   database = ENV.fetch('DATABASE_URL') { raise 'please provide a DATABASE_URL (pg only)' }
-  hostname = "127.0.0.1"
+  hostname = ENV.fetch('HOSTNAME')
   engine = ENV.fetch('ENGINE')
 
   `wrk -H 'Connection: keep-alive' -d 5s -c 8 --timeout 8 -t #{threads} http://#{hostname}:3000`
