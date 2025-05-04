@@ -10,9 +10,9 @@ services:
   runner:
     image: ruby:3.3.0-bookworm
     setup-commands:
-      - commands: apt update
-      - commands: apt install wrk -y
-      - commands: bundle config set path /tmp/repo/vendor/bundle
+      - command: apt update
+      - command: apt install wrk -y
+      - command: bundle config set path /tmp/repo/vendor/bundle
 #      This is now done in the Github aciton beforehand
 #      - bundle install --gemfile=/tmp/repo-writable/Gemfile
 
