@@ -2,7 +2,7 @@
   FROM python:{{{.}}}-slim
 {{/language.version}}
 {{^language.version}}
-  FROM python:3.12-slim
+  FROM python:3.13-slim
 {{/language.version}}
 
 WORKDIR /usr/src/app
@@ -10,11 +10,12 @@ WORKDIR /usr/src/app
 {{#build_deps.length}}
   ARG DEBIAN_FRONTEND=noninteractive
   RUN apt-get -y update
-{{/build_deps.length}}
 
-{{#build_deps}}
-  RUN apt-get -y install {{{.}}}
-{{/build_deps}}
+  {{#build_deps}}
+    RUN apt-get -y install {{{.}}}
+  {{/build_deps}}
+
+{{/build_deps.length}}
 
 {{#files}}
   COPY {{source}} {{target}}
@@ -28,6 +29,10 @@ WORKDIR /usr/src/app
   ENV {{{.}}}
 {{/environment}}
 
-RUN pip install -r requirements.txt
+RUN pip install .
 
-CMD {{command}}
+RUN apt-get -qq update
+RUN apt-get -qy install curl
+HEALTHCHECK CMD curl --fail http://0.0.0.0:3000 || exit 1
+
+ENTRYPOINT {{{command}}}

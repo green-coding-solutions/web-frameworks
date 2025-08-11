@@ -1,11 +1,16 @@
-import { RouteBuilder, BunicornApp } from "@bunicorn/server";
+import { Router, BunicornApp } from "@bunicorn/server";
 
-const app = new BunicornApp({ basePath: "/" });
-const rb = new RouteBuilder();
+const app = new BunicornApp();
+const router = new Router();
 app.addRoutes([
-  rb.get("/", (ctx) => ctx.ok()),
-  rb.get("/user/:id", (ctx) => ctx.raw(ctx.params.id)),
-  rb.post("/user", (ctx) => ctx.ok()),
+  router.get("/", (ctx) => ctx.ok()),
+  router.get("/user/:id", (ctx) => ctx.raw(ctx.params.id)),
+  router.post("/user", (ctx) => ctx.ok()),
 ]);
 
-app.serve({ port: 3000 });
+Bun.serve({
+  fetch(req) {
+    return app.handleRequest(req);
+  },
+  port: 3000, reusePort: true
+});

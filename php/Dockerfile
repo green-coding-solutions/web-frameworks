@@ -2,11 +2,11 @@
   FROM php:{{{.}}}-fpm
 {{/language.version}}
 {{^language.version}}
-  FROM php:8.3-fpm
+  FROM php:8.4-fpm
 {{/language.version}}
 
 RUN apt-get -qq update
-RUN apt-get -qy install libzip-dev {{#deps}} {{{.}}} {{/deps}}
+RUN apt-get -qy install --no-install-recommends libzip-dev {{#deps}} {{{.}}} {{/deps}}
 
 WORKDIR /usr/src/app
 
@@ -17,8 +17,10 @@ RUN docker-php-ext-install zip opcache
 {{/environment}}
 
 {{#build_deps}}
-  RUN apt-get -qy install {{{.}}}
+  RUN apt-get -qy install --no-install-recommends {{{.}}}
 {{/build_deps}}
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 {{#modules}}
   RUN docker-php-ext-install {{{.}}}
@@ -43,6 +45,9 @@ RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
   COPY '{{source}}' '{{target}}'
 {{/files}}
 
+  RUN apt-get -qq update
+  RUN apt-get -qy install curl
+
 
 {{^framework.standalone}}
   {{#bootstrap}}
@@ -51,7 +56,7 @@ RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
 {{/framework.standalone}}
 
 {{#command}}
-  CMD {{{.}}}
+  ENTRYPOINT {{{.}}}
 {{/command}}
 
 {{^command}}
@@ -95,6 +100,7 @@ RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
   > /etc/nginx/conf.d/server.conf
   
   RUN echo 'opcache.enable=1\n\
+  opcache.enable_cli=1\n\
   opcache.memory_consumption=512\n\
   opcache.interned_strings_buffer=64\n\
   opcache.max_accelerated_sources=32531\n\
@@ -103,7 +109,9 @@ RUN if [ -f "${EVENT_EXT_FILE}" ] ; then \
   opcache.fast_shutdown=0\n'\
   >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
   
-  CMD /usr/local/sbin/php-fpm --daemonize; nginx -g "daemon off;"
+
+  ENTRYPOINT /usr/local/sbin/php-fpm --daemonize; nginx -g "daemon off;"
 
 {{/command}}
 
+HEALTHCHECK CMD curl --fail http://0.0.0.0:3000 || exit 1

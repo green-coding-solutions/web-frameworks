@@ -26,7 +26,10 @@ venv
 /lib/**/*.cr
 /vendor
 .bundle
-/bin
+/bin/*
+
+# Specific to AdonisJS
+!/javascript/adonisjs6-slim/bin
 
 # Rust build directories
 rust/*/target
@@ -48,3 +51,9 @@ obj
 /elixir/*/deps/
 /elixir/*/mix.lock
 erl_crash.dump
+
+# python
+__pycache__/
+
+# Gradle
+*/*/gradle

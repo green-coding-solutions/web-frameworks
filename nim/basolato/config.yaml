@@ -1,12 +1,12 @@
 framework:
   github: itsumura-h/nim-basolato
-  version: 0.14
+  version: 0.15
 
   deps:
     - gcc
     - openssl
     - openssh-client
-    - libpcre2-dev
+    - pcre-dev
 
   build_command: "ducere build -p 3000"
 

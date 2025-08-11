@@ -29,10 +29,15 @@ end
 namespace :db do
   task :check_failures do
     results = JSON.parse(File.read('data.json'))
-    frameworks = results['metrics'].filter_map do |row|
+    results['frameworks'].map { _1['label'] }
+    failing_frameworks = results['metrics'].filter_map do |row|
       row['framework_id'] if row['label'] == 'total_requests_per_s' && (row['value']).zero?
     end
-    $stdout.puts results['frameworks'].filter_map { |row| row['label'] if frameworks.include?(row['id']) }
+    list_of = Dir.glob('*/*/config.yaml').map { _1.split('/')[1] }
+    $stdout.puts "Failing : #{results['frameworks'].filter_map do |row|
+      row['label'] if failing_frameworks.include?(row['id'])
+    end}"
+    $stdout.puts "Missing : #{list_of - results['frameworks'].map { _1['label'] }}"
   end
   task :raw_export do
     raise 'Please provide a database' unless ENV['DATABASE_URL']
@@ -80,7 +85,7 @@ namespace :db do
       end
     end
     data.merge!(updated_at: Time.now.utc, version: 1)
-    data.merge!(hardware: { cpus: Etc.nprocessors, memory: 16_282_676, cpu_name: 'AMD FX-8320E Eight-Core Processor',
+    data.merge!(hardware: { cpus: Etc.nprocessors, memory: 7_733_008, cpu_name: 'M1 Eight-Core Processor',
                             os: Etc.uname })
     File.write('data.json', JSON.pretty_generate(data))
     File.write('data.min.json', data.to_json)
